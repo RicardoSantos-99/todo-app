@@ -1,0 +1,74 @@
+# Calculator
+
+## Section
+
+```elixir
+defmodule Calculator do
+  def start() do
+    spawn(fn ->
+      loop(0)
+    end)
+  end
+
+  def value(server_pid) do
+    send(server_pid, {:value, self()})
+
+    receive do
+      {:response, value} -> value
+    end
+  end
+
+  def add(server_pid, value), do: send(server_pid, {:add, value})
+  def sub(server_pid, value), do: send(server_pid, {:sub, value})
+  def mul(server_pid, value), do: send(server_pid, {:mul, value})
+  def div(server_pid, value), do: send(server_pid, {:div, value})
+  def set(server_pid, value), do: send(server_pid, {:set, value})
+  def error(server_pid, error), do: send(server_pid, error)
+
+  def loop(value) do
+    value =
+      receive do
+        message -> process_message(value, message)
+      end
+
+    loop(value)
+  end
+
+  def process_message(value, {:value, caller}) do
+    tap(value, &send(caller, {:response, &1}))
+  end
+
+  def process_message(value, {:add, num}), do: value + num
+  def process_message(value, {:sub, num}), do: value - num
+  def process_message(value, {:mul, num}), do: value * num
+  def process_message(value, {:div, num}), do: value / num
+  def process_message(_value, {:set, num}), do: num
+
+  def process_message(value, invalid_request) do
+    tap(value, fn _ -> IO.puts("Invalid req #{inspect(invalid_request)}") end)
+  end
+end
+```
+
+```elixir
+calculator_pid = Calculator.start()
+```
+
+```elixir
+Calculator.value(calculator_pid)
+```
+
+```elixir
+Calculator.add(calculator_pid, 10)
+Calculator.sub(calculator_pid, 5)
+Calculator.mul(calculator_pid, 3)
+Calculator.div(calculator_pid, 5)
+```
+
+```elixir
+Calculator.set(calculator_pid, 0)
+```
+
+```elixir
+Calculator.error(calculator_pid, "dasd")
+```
