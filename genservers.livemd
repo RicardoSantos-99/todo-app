@@ -1,0 +1,84 @@
+# Untitled notebook
+
+## Section
+
+```elixir
+defmodule KeyValueStore do
+  use GenServer
+
+  def init(_) do
+    # :timer.send_interval(15000, :cleanup) 
+    {:ok, %{}}
+  end
+
+  def handle_info(:cleanup, state) do
+    IO.puts("performing cleanup...")
+    {:noreply, state}
+  end
+
+  def handle_cast({:put, key, value}, state) do
+    {:noreply, Map.put(state, key, value)}
+  end
+
+  def handle_call({:get, key}, _, state) do
+    {:reply, Map.get(state, key), state}
+  end
+
+  # client
+
+  def start do
+    GenServer.start(__MODULE__, nil)
+  end
+
+  def put(pid, key, value) do
+    GenServer.cast(pid, {:put, key, value})
+  end
+
+  def get(pid, key) do
+    GenServer.call(pid, {:get, key})
+  end
+end
+```
+
+```elixir
+KeyValueStore.__info__(:functions)
+```
+
+```elixir
+GenServer.start(KeyValueStore, nil)
+```
+
+```elixir
+{:ok, pid} = KeyValueStore.start()
+```
+
+```elixir
+KeyValueStore.put(pid, :some_key, :some_value)
+```
+
+```elixir
+KeyValueStore.get(pid, :some_key)
+```
+
+```elixir
+defmodule EchoServer do
+  use GenServer
+
+  def init(_) do
+    {:ok, %{}}
+  end
+
+  @impl GenServer
+  def handle_call(some_request, server_state) do
+    {:reply, some_request, server_state}
+  end
+end
+```
+
+```elixir
+{:ok, pid} = GenServer.start(EchoServer, nil)
+```
+
+```elixir
+GenServer.call(pid, :some_call)
+```
