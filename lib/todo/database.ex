@@ -15,12 +15,14 @@ defmodule Todo.Database do
     GenServer.call(__MODULE__, {:get, key})
   end
 
+  @impl GenServer
   def init(_) do
     File.mkdir_p!(@db_folder)
     {:ok, nil}
   end
 
-  def handle_cast({:store, key, data}, _, state) do
+  @impl GenServer
+  def handle_cast({:store, key, data}, state) do
     key
     |> file_name()
     |> File.write!(:erlang.term_to_binary(data))
@@ -28,6 +30,7 @@ defmodule Todo.Database do
     {:noreply, state}
   end
 
+  @impl GenServer
   def handle_call({:get, key}, _, state) do
     data =
       case File.read(file_name(key)) do
