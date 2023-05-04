@@ -1,43 +1,35 @@
 defmodule Todo.Database do
-  @pool_size 3
   @db_folder "./persist"
 
-  def start_link do
+  def child_spec(_) do
     File.mkdir_p!(@db_folder)
 
-    children = Enum.map(1..@pool_size, &worker_spec/1)
-    Supervisor.start_link(children, strategy: :one_for_one)
-  end
-
-  defp worker_spec(worker_id) do
-    default_worker_spec = {Todo.DatabaseWorker, {@db_folder, worker_id}}
-    Supervisor.child_spec(default_worker_spec, id: worker_id)
-  end
-
-  def child_spec(_) do
-    %{
-      id: __MODULE__,
-      start: {__MODULE__, :start_link, []},
-      type: :supervisor
-    }
+    :poolboy.child_spec(
+      __MODULE__,
+      [
+        name: {:local, __MODULE__},
+        worker_module: Todo.DatabaseWorker,
+        size: 3
+      ],
+      [@db_folder]
+    )
   end
 
   def store(key, data) do
-    key
-    |> choose_worker()
-    |> Todo.DatabaseWorker.store(key, data)
+    :poolboy.transaction(
+      __MODULE__,
+      fn worker_pid ->
+        Todo.DatabaseWorker.store(worker_pid, key, data)
+      end
+    )
   end
 
   def get(key) do
-    key
-    |> choose_worker()
-    |> Todo.DatabaseWorker.get(key)
-  end
-
-  # Choosing a worker makes a request to the database server process. There we
-  # keep the knowledge about our workers, and return the pid of the corresponding
-  # worker. Once this is done, the caller process will talk to the worker directly.
-  defp choose_worker(key) do
-    :erlang.phash2(key, @pool_size) + 1
+    :poolboy.transaction(
+      __MODULE__,
+      fn worker_pid ->
+        Todo.DatabaseWorker.get(worker_pid, key)
+      end
+    )
   end
 end
