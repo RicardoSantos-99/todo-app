@@ -32,17 +32,17 @@ defmodule Process.Monitor do
         IO.inspect(message)
         loop()
 
-      {:EXIT, _pid, {%RuntimeError{message: _message}, _stacktrace}} ->
-        IO.inspect("Bateu no erro")
-        loop()
+        # {:EXIT, _pid, {%RuntimeError{message: _message}, _stacktrace}} ->
+        #   IO.inspect("Bateu no erro")
+        #   loop()
 
-      {:EXIT, _pid, {{:nocatch, _reason}, _stacktrace}} ->
-        IO.inspect("Bateu no throw")
-        loop()
+        # {:EXIT, _pid, {{:nocatch, _reason}, _stacktrace}} ->
+        #   IO.inspect("Bateu no throw")
+        #   loop()
 
-      {:EXIT, _pid, _reason} ->
-        IO.inspect("Bateu no exit")
-        loop()
+        # {:EXIT, _pid, _reason} ->
+        #   IO.inspect("Bateu no exit")
+        #   loop()
     end
   end
 end
